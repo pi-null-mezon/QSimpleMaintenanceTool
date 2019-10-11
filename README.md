@@ -39,35 +39,39 @@ Ok, that is all!
 ```C++
 #include "qsimplemaintenancetool.h"
 ...
-	QSimpleMaintenanceTool smt;
-	QObject::connect(&smt,&QSimpleMaintenanceTool::checked,[&smt](const QString &_openurl, const QString &_latestversion, const QString &_downloadurl, const QString &_changelog, bool _mandatory){
-		qDebug() << "Latest-version in storage " << _latestversion;
-		if(_latestversion > APP_VERSION) { // here APP_VERSION is a macro defined at compile time
-			qDebug("Local version (%s) is lower than latest (%s) in storage. Update needed", APP_VERSION,_latestversion.toUtf8().constData());
-			smt.download(_downloadurl);
-			
-			QObject::connect(&smt,&QSimpleMaintenanceTool::downloadProgress,[](qint64 bytesReceived, qint64 bytesTotal){
-				static uint8_t progress = 0, _maxbins = 20;
-				const uint8_t _tmp = _maxbins * static_cast<float>(bytesReceived) / bytesTotal;
-				if(_tmp > progress) {
-					for(uint8_t i = 0; i < (_tmp - progress); ++i)
-						std::cout << '.';
-					progress = _tmp;
-				}
-				if(_tmp == _maxbins)
-					std::cout << std::endl;
-			});
-		} else
-			qDebug("Local version (%s) is greater than latest (%s) in storage or they are equal. No update needed", APP_VERSION,_latestversion.toUtf8().constData());
-	});
-	QObject::connect(&smt,&QSimpleMaintenanceTool::downloaded,[&a](const QString &_filename){
-		QFileInfo _finfo(_filename);
-		qDebug() << "Downloads has been saved: " << _filename  << " (" << _finfo.size() << " bytes)";
-	});
-	QObject::connect(&smt,&QSimpleMaintenanceTool::error,[&a](const QString &_error){
-		qDebug() << _error;
-	});
-	smt.check("https://mysoftware.org/myapp.json");
+QSimpleMaintenanceTool smt;
+QObject::connect(&smt,&QSimpleMaintenanceTool::checked,[&smt](const QString &_openurl,
+																										const QString &_latestversion,
+																										const QString &_downloadurl,
+																										const QString &_changelog,
+																										bool _mandatory){
+	qDebug() << "Latest-version in storage " << _latestversion;
+	if(_latestversion > APP_VERSION) { // here APP_VERSION is a macro defined at compile time
+		smt.download(_downloadurl);
+		// optional progress printing part
+		QObject::connect(&smt,&QSimpleMaintenanceTool::downloadProgress,[](qint64 bytesReceived,
+																														 qint64 bytesTotal){
+			static uint8_t progress = 0, _maxbins = 20;
+			const uint8_t _tmp = _maxbins * static_cast<float>(bytesReceived) / bytesTotal;
+			if(_tmp > progress) {
+				for(uint8_t i = 0; i < (_tmp - progress); ++i)
+					std::cout << '.';
+				progress = _tmp;
+			}
+			if(_tmp == _maxbins)
+				std::cout << std::endl;
+		});
+		// end of optional part
+	}
+});
+QObject::connect(&smt,&QSimpleMaintenanceTool::downloaded,[&a](const QString &_filename){
+	QFileInfo _finfo(_filename);
+	qDebug() << "Downloads has been saved: " << _filename  << " (" << _finfo.size() << " bytes)";
+});
+QObject::connect(&smt,&QSimpleMaintenanceTool::error,[&a](const QString &_error){
+	qDebug() << _error;
+});
+smt.check("https://mysoftware.org/myapp.json");
 ...
 ```
 

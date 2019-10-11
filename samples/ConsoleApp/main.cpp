@@ -24,15 +24,14 @@ int main(int argc, char *argv[])
     QSimpleMaintenanceTool smt;
     if(cmdparser.isSet(checkurlOption)) {
         QObject::connect(&smt,&QSimpleMaintenanceTool::checked,[&smt,&a](const QString &_openurl, const QString &_latestversion, const QString &_downloadurl, const QString &_changelog, bool _mandatory){
-            qDebug() << "Maintenance check has been performed: latest-version in storage "
-                     << _latestversion
+            qDebug() << "Latest-version in storage " << _latestversion
                      << " ( download-url: " << _downloadurl << ")";
             if(_latestversion > APP_VERSION) {
                 qDebug("Local version (%s) is lower than latest (%s) in storage. Update needed", APP_VERSION,_latestversion.toUtf8().constData());
                 smt.download(_downloadurl);
+                // optional part
                 QObject::connect(&smt,&QSimpleMaintenanceTool::downloadProgress,[](qint64 bytesReceived, qint64 bytesTotal){
-                    static uint8_t progress = 0;
-                    const uint8_t _maxbins = 20;
+                    static uint8_t progress = 0, _maxbins = 20;
                     const uint8_t _tmp = _maxbins * static_cast<float>(bytesReceived) / bytesTotal;
                     if(_tmp > progress) {
                         for(uint8_t i = 0; i < (_tmp - progress); ++i)
@@ -42,15 +41,14 @@ int main(int argc, char *argv[])
                     if(_tmp == _maxbins)
                         std::cout << std::endl;
                 });
+                // end of optional part
             } else {
-                qDebug("Local version (%s) is greater than latest (%s) in storage. No update needed", APP_VERSION,_latestversion.toUtf8().constData());
+                qDebug("Local version (%s) is greater than latest (%s) in storage or they are equal. No update needed", APP_VERSION,_latestversion.toUtf8().constData());
                 a.quit();
             }
         });
         QObject::connect(&smt,&QSimpleMaintenanceTool::downloaded,[&a](const QString &_filename){
-            QFileInfo _finfo(_filename);
-            qDebug() << "Downloads has been received: " << _filename
-                     << " (" << _finfo.size() << " bytes)";
+            qDebug() << "Downloads has been received: " << _filename << " (" << QFileInfo(_filename).size() << " bytes)";
             a.quit();
         });
         QObject::connect(&smt,&QSimpleMaintenanceTool::error,[&a](const QString &_error){
