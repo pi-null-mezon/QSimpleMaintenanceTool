@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
             }
         });
         QObject::connect(&smt,&QSimpleMaintenanceTool::downloaded,[&a](const QString &_filename){
-            qDebug() << "Downloads has been received: " << _filename << " (" << QFileInfo(_filename).size() << " bytes)";
+            qDebug() << "Downloads have been saved: " << _filename << " (" << QFileInfo(_filename).size() << " bytes)";
             a.quit();
         });
         QObject::connect(&smt,&QSimpleMaintenanceTool::error,[&a](const QString &_error){

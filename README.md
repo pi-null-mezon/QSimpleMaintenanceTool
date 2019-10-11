@@ -41,16 +41,16 @@ Ok, that is all!
 ...
 QSimpleMaintenanceTool smt;
 QObject::connect(&smt,&QSimpleMaintenanceTool::checked,[&smt](const QString &_openurl,
-                                                              const QString &_latestversion,
-                                                              const QString &_downloadurl,
-                                                              const QString &_changelog,
-                                                              bool _mandatory){
+                                                                                                          const QString &_latestversion,
+                                                                                                          const QString &_downloadurl,
+                                                                                                          const QString &_changelog,
+                                                                                                          bool _mandatory){
 	qDebug() << "Latest-version in storage " << _latestversion;
 	if(_latestversion > APP_VERSION) { // here APP_VERSION is a macro defined at compile time
 		smt.download(_downloadurl);
 		// optional progress printing part
 		QObject::connect(&smt,&QSimpleMaintenanceTool::downloadProgress,[](qint64 bytesReceived,
-                                                                                   qint64 bytesTotal){
+                                                                                                                         qint64 bytesTotal){
 			static uint8_t progress = 0, _maxbins = 20;
 			const uint8_t _tmp = _maxbins * static_cast<float>(bytesReceived) / bytesTotal;
 			if(_tmp > progress) {
@@ -65,8 +65,7 @@ QObject::connect(&smt,&QSimpleMaintenanceTool::checked,[&smt](const QString &_op
 	}
 });
 QObject::connect(&smt,&QSimpleMaintenanceTool::downloaded,[&a](const QString &_filename){
-	QFileInfo _finfo(_filename);
-	qDebug() << "Downloads has been saved: " << _filename  << " (" << _finfo.size() << " bytes)";
+	qDebug() << "Downloads have been saved: " << _filename  << " (" << QFileInfo(_filename).size() << " bytes)";
 });
 QObject::connect(&smt,&QSimpleMaintenanceTool::error,[&a](const QString &_error){
 	qDebug() << _error;
