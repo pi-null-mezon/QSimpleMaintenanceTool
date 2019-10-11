@@ -12,7 +12,7 @@ all network downloads in QSimpleMaintenanceTool are performed in separate thread
 To integrate maintenance tool into your app, just clone this repo and include "qsimplemaintenance.pri" into your project's .pro file.
  
 Now, let's suppose that we host our software distribution server on *https://mysoftware.org* and want to update *myapp* application.
-Then we should share on *https://mysoftware.org* access for maintenance file. Let's give it name "myapp.json". it should contain maintenance info about our application (thanks goes to [alex-spataru](https://github.com/alex-spataru/QSimpleUpdater)):
+Then we should share on *https://mysoftware.org* access for maintenance file. Let's give it name "myapp.json". it should contain maintenance info about our application (all thanks goes to [alex-spataru](https://github.com/alex-spataru/QSimpleUpdater)):
 
 ```json
 {
@@ -58,7 +58,7 @@ Ok, that is all!
 					std::cout << std::endl;
 			});
 		} else
-			qDebug("Local version (%s) is greater than latest (%s) in storage. No update needed", APP_VERSION,_latestversion.toUtf8().constData());
+			qDebug("Local version (%s) is greater than latest (%s) in storage or they are equal. No update needed", APP_VERSION,_latestversion.toUtf8().constData());
 	});
 	QObject::connect(&smt,&QSimpleMaintenanceTool::downloaded,[&a](const QString &_filename){
 		QFileInfo _finfo(_filename);
@@ -71,4 +71,4 @@ Ok, that is all!
 ...
 ```
 
-Check how QSimpleMaintenanceTool suppose to be used by playing with samples. Enjoy!
+Check full code of how QSimpleMaintenanceTool suppose to be used in [samples](https://github.com/pi-null-mezon/QSimpleMaintenanceTool/tree/master/samples/ConsoleApp). Enjoy!
