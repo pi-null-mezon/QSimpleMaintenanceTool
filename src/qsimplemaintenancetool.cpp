@@ -3,6 +3,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 
+#include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QJsonParseError>
@@ -13,7 +14,8 @@
 
 #include "qfiledownloader.h"
 
-QSimpleMaintenanceTool::QSimpleMaintenanceTool(QObject *parent) : QObject(parent)
+QSimpleMaintenanceTool::QSimpleMaintenanceTool(const QString &_appname, QObject *parent) : QObject(parent),
+    appname(_appname)
 {
 }
 
@@ -30,6 +32,7 @@ void QSimpleMaintenanceTool::check(const QString &_url)
 void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_jsondata, const QString &_filename)
 {
     Q_UNUSED(_filename)
+    Q_UNUSED(_httpcode)
     //qDebug("HTTP code [%d] has been recieved in QSimpleMaintenanceTool::__check()", _httpcode);
     if(_err == QNetworkReply::NetworkError::NoError) {
         if(_jsondata.size() > 0) {
@@ -38,8 +41,8 @@ void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError 
             if(_jsonparseerr.error != QJsonParseError::NoError)
                 emit error(tr("Maintenance check failed: '%1'").arg(_jsonparseerr.errorString()));
             else {
-                if(_json.contains("updates")) {
-                    QString _platform = "unknown";
+                if(_json.contains(appname)) {
+                    QString _platform("unknown");
                     #if defined Q_OS_WIN
                         _platform = "windows";
                     #elif defined Q_OS_MAC
@@ -51,19 +54,29 @@ void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError 
                     #elif defined Q_OS_IOS
                         _platform = "ios";
                     #endif
-                    _json = _json.value("updates").toObject();
+                    _json = _json.value(appname).toObject();
                     if(_json.contains(_platform)) {
-                        _json = _json.value(_platform).toObject();
-                        emit checked(_json.value("open-url").toString(),
-                                     _json.value("latest-version").toString(),
-                                     _json.value("download-url").toString(),
-                                     _json.value("changelog").toString(),
-                                     _json.value("mandatory").toBool());
+                        QJsonArray _jsonarray = _json.value(_platform).toArray();
+                        if(_jsonarray.size() > 0) {
+                            QList<smt::Version> _versions;
+                            _versions.reserve(_jsonarray.size());
+                            for(int i = 0; i < _jsonarray.size(); ++i) {
+                                _json = _jsonarray.at(i).toObject();
+                                _versions.push_back(smt::Version(_json.value("version").toString(),
+                                                                    _json.value("url").toString(),
+                                                                    _json.value("changelog").toString()));
+                            }
+                            std::sort(_versions.begin(),_versions.end(),[](const smt::Version &_l,const smt::Version &_r){
+                                return _l.version > _r.version;
+                            });
+                            emit checked(_versions);
+                        } else
+                            emit error(tr("Maintenance check failed: no available versions found").arg(_platform));
                     }
                     else
                         emit error(tr("Maintenance check failed: '%1' section not found").arg(_platform));
                 } else
-                    emit error(tr("Maintenance check failed: 'updates' section not found"));
+                    emit error(tr("Maintenance check failed: '%1' section not found").arg(appname));
             }
         } else
             emit error(tr("Maintenance check failed: empty maintenance info file"));

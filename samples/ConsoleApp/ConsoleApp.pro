@@ -26,7 +26,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 # All what we will add to use QSimpleMaintenanceTool
 include($${PWD}/../../qsimplemaintenancetool.pri)
 
+TARGET  = myapp
 VERSION = 1.0.0.0
 
-DEFINES += APP_NAME=\\\"Myapp\\\" \
+DEFINES += APP_NAME=\\\"$${TARGET}\\\" \
            APP_VERSION=\\\"$${VERSION}\\\"

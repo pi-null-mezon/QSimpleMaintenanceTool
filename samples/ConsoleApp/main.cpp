@@ -23,19 +23,25 @@ int main(int argc, char *argv[])
 
     QSimpleMaintenanceTool smt;
     if(cmdparser.isSet(checkurlOption)) {
-        QObject::connect(&smt,&QSimpleMaintenanceTool::checked,[&smt,&a](const QString &_openurl, const QString &_latestversion, const QString &_downloadurl, const QString &_changelog, bool _mandatory){
-            qDebug() << "Latest-version in storage " << _latestversion
-                     << " ( download-url: " << _downloadurl << ")";
-            if(_latestversion > APP_VERSION) {
-                qDebug("Local version (%s) is lower than latest (%s) in storage. Update needed", APP_VERSION,_latestversion.toUtf8().constData());
-                smt.download(_downloadurl);
+        qDebug("Application version: %s\n-----", APP_VERSION);
+        QObject::connect(&smt,&QSimpleMaintenanceTool::checked,[&smt,&a](const QList<smt::Version> &_versions){
+            // If this slot is called then _versions list is not empty
+            qDebug() << "Available versions in storage: ";
+            for(const auto &_version : _versions)
+                qDebug() << _version.version << " - "
+                         << _version.changelog
+                         << "(" << _version.url << ")";
+            const smt::Version &_lastversion = _versions.at(0); // greatest available
+            if(_lastversion.version > APP_VERSION) {
+                smt.download(_lastversion.url);
                 // optional part
-                QObject::connect(&smt,&QSimpleMaintenanceTool::downloadProgress,[](qint64 bytesReceived, qint64 bytesTotal){
+                QObject::connect(&smt,&QSimpleMaintenanceTool::downloadProgress,[](qint64 bytesReceived,
+                                                                                   qint64 bytesTotal){
                     static uint8_t progress = 0, _maxbins = 20;
-                    const uint8_t _tmp = _maxbins * static_cast<float>(bytesReceived) / bytesTotal;
+                    const uint8_t _tmp = static_cast<uint8_t>(_maxbins * static_cast<float>(bytesReceived) / bytesTotal);
                     if(_tmp > progress) {
                         for(uint8_t i = 0; i < (_tmp - progress); ++i)
-                            std::cout << '.';
+                            std::cout << '.' << std::flush;
                         progress = _tmp;
                     }
                     if(_tmp == _maxbins)
@@ -43,12 +49,13 @@ int main(int argc, char *argv[])
                 });
                 // end of optional part
             } else {
-                qDebug("Local version (%s) is greater than latest (%s) in storage or they are equal. No update needed", APP_VERSION,_latestversion.toUtf8().constData());
+                qDebug("Current version greater or equal to the latest");
                 a.quit();
             }
         });
         QObject::connect(&smt,&QSimpleMaintenanceTool::downloaded,[&a](const QString &_filename){
-            qDebug() << "Downloads have been saved: " << _filename << " (" << QFileInfo(_filename).size() << " bytes)";
+            qDebug() << "Downloads have been saved: " << _filename
+                     << " (" << QFileInfo(_filename).size() << " bytes )";
             a.quit();
         });
         QObject::connect(&smt,&QSimpleMaintenanceTool::error,[&a](const QString &_error){
@@ -58,7 +65,6 @@ int main(int argc, char *argv[])
         smt.check(cmdparser.value(checkurlOption));
     } else {
         cmdparser.showHelp();
-        a.quit();
     }
 
     return a.exec();

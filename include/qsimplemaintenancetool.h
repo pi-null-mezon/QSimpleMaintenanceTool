@@ -1,10 +1,20 @@
 #ifndef QSIMPLEMAINTENANCETOOL_H
 #define QSIMPLEMAINTENANCETOOL_H
 
+#include <QCoreApplication>
 #include <QNetworkReply>
 #include <QObject>
 #include <QThread>
 #include <QUrl>
+
+namespace smt {
+    struct Version {
+        Version(const QString &_version, const QString &_url, const QString &_changelog):
+            version(_version), url(_url), changelog(_changelog) {}
+
+        QString version, url, changelog;
+    };
+}
 
 /**
  * @brief The QSimpleMaintenanceTool class should be used to check and download updates
@@ -13,12 +23,16 @@ class QSimpleMaintenanceTool : public QObject
 {
     Q_OBJECT
 public:
-    explicit QSimpleMaintenanceTool(QObject *parent = nullptr);
+    explicit QSimpleMaintenanceTool(const QString &_appname=QCoreApplication::applicationName(), QObject *parent = nullptr);
 
 signals:
     void error(const QString &_message);
     void checkProgress(qint64 bytesReceived, qint64 bytesTotal);
-    void checked(const QString &_openurl, const QString &_latestversion, const QString &_downloadurl, const QString &_changelog, bool _mandatory);
+    /**
+     * @brief checked
+     * @param _versions - list of available versions ordered descending
+     */
+    void checked(const QList<smt::Version> &_versions);
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
     void downloaded(const QString &_filename);
 
@@ -38,6 +52,9 @@ public slots:
 private slots:
     void __check(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_jsondata, const QString &_filename);
     void __download(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_downloads, const QString &_filename);
+
+private:
+    QString appname;
 };
 
 #endif // QSIMPLEMAINTENANCETOOL_H
