@@ -65,7 +65,8 @@ QObject::connect(&smt,&QSimpleMaintenanceTool::checked,[&smt](const QString &_op
 	}
 });
 QObject::connect(&smt,&QSimpleMaintenanceTool::downloaded,[&a](const QString &_filename){
-	qDebug() << "Downloads have been saved: " << _filename  << " (" << QFileInfo(_filename).size() << " bytes)";
+	qDebug() << "Downloads have been saved: " << _filename 
+	         << " (" << QFileInfo(_filename).size() << " bytes)";
 });
 QObject::connect(&smt,&QSimpleMaintenanceTool::error,[&a](const QString &_error){
 	qDebug() << _error;
