@@ -54,7 +54,7 @@ private slots:
     void __download(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_downloads, const QString &_filename);
 
 private:
-    QString appname;
+    QString appname, platform, cpuarch;
 };
 
 #endif // QSIMPLEMAINTENANCETOOL_H

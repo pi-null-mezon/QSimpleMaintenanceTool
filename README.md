@@ -28,13 +28,22 @@ Then we should share on *https://mysoftware.org* access for maintenance file. Le
         "changelog": "This is an example changelog for Windows. Go on..."
       }
     ],
-    "linux": [
-      {
-        "version": "1.0.0.0",
-        "url": "https://mysoftware.org/setup_myapp_gcc_x86_64_last.deb",
-        "changelog": "This is an example changelog for Linux. Go on..."
-      }
-    ]
+    "linux": {
+      "x86": [
+        {
+          "version": "1.0.0.0",
+          "url": "https://mysoftware.org/setup_myapp_gcc_x86_last.deb",
+          "changelog": "This is an example changelog for Linux. Go on..."
+        }
+      ],
+      "x86_64": [
+        {
+          "version": "1.0.0.0",
+          "url": "https://mysoftware.org/setup_myapp_gcc_x86_64_last.deb",
+          "changelog": "This is an example changelog for Linux. Go on..."
+        }
+      ]
+    }
   },
   "otherapp": {
     "android": [

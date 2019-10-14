@@ -12,11 +12,28 @@
 #include <QFile>
 #include <QFileInfo>
 
+#include <QSysInfo>
+
 #include "qfiledownloader.h"
 
 QSimpleMaintenanceTool::QSimpleMaintenanceTool(const QString &_appname, QObject *parent) : QObject(parent),
     appname(_appname)
 {
+    platform = "unknown";
+#if defined Q_OS_WIN
+    platform = "windows";
+#elif defined Q_OS_MAC
+    platform = "osx";
+#elif defined Q_OS_LINUX
+    platform = "linux";
+#elif defined Q_OS_ANDROID
+    platform = "android";
+#elif defined Q_OS_IOS
+    platform = "ios";
+#endif
+    cpuarch = QSysInfo::buildCpuArchitecture();
+    qInfo("QSimpleMaintenanceTool target platform: '%s' and cpuarch: '%s'",
+          platform.toUtf8().constData(), cpuarch.toUtf8().constData());
 }
 
 void QSimpleMaintenanceTool::check(const QString &_url)
@@ -42,21 +59,14 @@ void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError 
                 emit error(tr("Maintenance check failed: '%1'").arg(_jsonparseerr.errorString()));
             else {
                 if(_json.contains(appname)) {
-                    QString _platform("unknown");
-                    #if defined Q_OS_WIN
-                        _platform = "windows";
-                    #elif defined Q_OS_MAC
-                        _platform = "osx";
-                    #elif defined Q_OS_LINUX
-                        _platform = "linux";
-                    #elif defined Q_OS_ANDROID
-                        _platform = "android";
-                    #elif defined Q_OS_IOS
-                        _platform = "ios";
-                    #endif
                     _json = _json.value(appname).toObject();
-                    if(_json.contains(_platform)) {
-                        QJsonArray _jsonarray = _json.value(_platform).toArray();
+                    if(_json.contains(platform)) {
+                        QJsonObject _jtmp = _json.value(platform).toObject();
+                        QJsonArray _jsonarray;
+                        if(_jtmp.contains(cpuarch))
+                            _jsonarray = _jtmp.value(cpuarch).toArray();
+                        else
+                            _jsonarray = _json.value(platform).toArray();
                         if(_jsonarray.size() > 0) {
                             QList<smt::Version> _versions;
                             _versions.reserve(_jsonarray.size());
@@ -71,10 +81,10 @@ void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError 
                             });
                             emit checked(_versions);
                         } else
-                            emit error(tr("Maintenance check failed: no available versions found").arg(_platform));
+                            emit error(tr("Maintenance check failed: no available versions found"));
                     }
                     else
-                        emit error(tr("Maintenance check failed: '%1' section not found").arg(_platform));
+                        emit error(tr("Maintenance check failed: '%1' section not found").arg(platform));
                 } else
                     emit error(tr("Maintenance check failed: '%1' section not found").arg(appname));
             }
