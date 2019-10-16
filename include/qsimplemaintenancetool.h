@@ -5,6 +5,7 @@
 #include <QNetworkReply>
 #include <QObject>
 #include <QThread>
+#include <QDir>
 #include <QUrl>
 
 namespace smt {
@@ -47,14 +48,14 @@ public slots:
      * @note use in conjunction with 'downloadLink(...)' signal
      * @param _url (example http://mypublichosting.org/)
      */
-    void download(const QString &_url);
+    void download(const QString &_url, const QString &_targetpath=QDir::home().absolutePath());
 
 private slots:
     void __check(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_jsondata, const QString &_filename);
     void __download(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_downloads, const QString &_filename);
 
 private:
-    QString appname, platform, cpuarch;
+    QString appname, platform, cpuarch, targetpath;
 };
 
 #endif // QSIMPLEMAINTENANCETOOL_H

@@ -8,11 +8,9 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 
-#include <QDir>
 #include <QFile>
-#include <QFileInfo>
-
 #include <QSysInfo>
+#include <QFileInfo>
 
 #include "qfiledownloader.h"
 
@@ -94,8 +92,9 @@ void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError 
         emit error(tr("Maintenance check failed: '%1'").arg(_errstring));
 }
 
-void QSimpleMaintenanceTool::download(const QString &_url)
+void QSimpleMaintenanceTool::download(const QString &_url,const QString &_targetpath)
 {
+    targetpath = _targetpath;
     QFileDownloader *_thread = new QFileDownloader(QUrl::fromUserInput(_url));
     connect(_thread,SIGNAL(downloadProgress(qint64,qint64)),this,SIGNAL(downloadProgress(qint64,qint64)));
     connect(_thread,SIGNAL(replyReady(int,QNetworkReply::NetworkError,QString,QByteArray,QString)),
@@ -110,7 +109,7 @@ void QSimpleMaintenanceTool::__download(int _httpcode, QNetworkReply::NetworkErr
     //qDebug("HTTP code [%d] has been recieved in QSimpleMaintenanceTool::__download()", _httpcode);
     if(_err == QNetworkReply::NetworkError::NoError) {
         if(_downloads.size() > 0) {
-            const QString _targetname = QDir::home().absolutePath().append("/%1").arg(_filename);
+            const QString _targetname = QString(targetpath).append("/%1").arg(_filename);
             QFile _file(_targetname);
             if(_file.exists())
                 if(QFile::remove(_targetname) == false) {
