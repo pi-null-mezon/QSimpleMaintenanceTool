@@ -4,7 +4,7 @@ QSimpleMaintenanceTool
 This repo contains simple Qt-based tool to install and update your applications on remote and local clients.
 
 Original idea has been stolen from [alex-spataru](https://github.com/alex-spataru/QSimpleUpdater). In fact in first version .json files that both projects are used were the same. !But not now!, because it was not very convenient for me ) The major difference from [QSimpleUpdater](https://github.com/alex-spataru/QSimpleUpdater)
-in smaller and lighter code without any GUI (cause you know, you can always draw your own, right). Also in QSimpleMaintenanceTool all file downloads are performed in separate threads, so QSimpleMaintenanceTool should not cause any freezes.  
+in smaller and lighter code without any GUI (cause you know, you can always draw your own, right). Also in QSimpleMaintenanceTool all file downloads are performed in separate threads (one thread per download), so QSimpleMaintenanceTool should not cause any freezes.  
 
 **How to use**
 
@@ -24,15 +24,15 @@ Then we should share on *https://mysoftware.org* access for maintenance file. Le
       },
       {
        "version": "2.0.0.0",
-        "url": "https://mysoftware.org/setup_myapp_mingw_x86_last.msi",
+        "url": "ftp://mysoftware.org/setup_myapp_mingw_x86_last.msi",
         "changelog": "This is an example changelog for Windows. Go on..."
       }
     ],
     "linux": {
-      "x86": [
+      "i386": [
         {
           "version": "1.0.0.0",
-          "url": "https://mysoftware.org/setup_myapp_gcc_x86_last.deb",
+          "url": "ftp://mysoftware.org/setup_myapp_gcc_x86_last.deb",
           "changelog": "This is an example changelog for Linux. Go on..."
         }
       ],
@@ -45,10 +45,6 @@ Then we should share on *https://mysoftware.org* access for maintenance file. Le
       ]
     }
   },
-  "mymusic": [
-    "http://mediastorage.com/Muse/Aftermath.mp3",
-	"http://mediastorage.com/TheRasmus/HolyGrail.mp3"
-  ],
   "otherapp": {
     "android": [
       {
@@ -78,7 +74,8 @@ QObject::connect(&smt,&QSimpleMaintenanceTool::checked,[&smt,&a](const QList<smt
     if(_lastversion.version > APP_VERSION) {
         smt.download(_lastversion.url);
         // optional part
-        QObject::connect(&smt,&QSimpleMaintenanceTool::downloadProgress,[](qint64 bytesReceived,
+        QObject::connect(&smt,&QSimpleMaintenanceTool::downloadProgress,[](const QString &_url,
+		                                                                   qint64 bytesReceived,
                                                                            qint64 bytesTotal){
             static uint8_t progress = 0, _maxbins = 20;
             const uint8_t _tmp = static_cast<uint8_t>(_maxbins * static_cast<float>(bytesReceived) / bytesTotal);
@@ -106,4 +103,20 @@ smt.check("https://mysoftware.org/updates.json");
 ...
 ```
 
-Check full code of how QSimpleMaintenanceTool suppose to be used in [samples](https://github.com/pi-null-mezon/QSimpleMaintenanceTool/tree/master/samples/ConsoleApp). Enjoy!
+Check full code of how QSimpleMaintenanceTool suppose to be used in [samples](https://github.com/pi-null-mezon/QSimpleMaintenanceTool/tree/master/samples/ConsoleApp).
+
+Not only resources with explicit version/platform are supported. QSimpleMaintenanceTool also handles following format:  
+
+```
+{
+	"music": [
+		"http://mediastorage.com/Muse/Aftermath.mp3",
+		"http://mediastorage.com/TheRasmus/HolyGrail.mp3"
+	  ],
+	"images": [
+		"ftp://mediastorage.com/Leonardo/MonaLisa.jpg"
+	  ]
+ }
+```
+
+Be cool and enjoy! 
