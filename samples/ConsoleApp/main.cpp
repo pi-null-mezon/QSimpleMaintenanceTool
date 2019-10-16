@@ -35,8 +35,10 @@ int main(int argc, char *argv[])
             if(_lastversion.version > APP_VERSION) {
                 smt.download(_lastversion.url);
                 // optional part
-                QObject::connect(&smt,&QSimpleMaintenanceTool::downloadProgress,[](qint64 bytesReceived,
+                QObject::connect(&smt,&QSimpleMaintenanceTool::downloadProgress,[](const QString &_url,
+                                                                                   qint64 bytesReceived,
                                                                                    qint64 bytesTotal){
+                    Q_UNUSED(_url) // _url is reserved for the cases when multiple files are downloaded simulateneously
                     static uint8_t progress = 0, _maxbins = 20;
                     const uint8_t _tmp = static_cast<uint8_t>(_maxbins * static_cast<float>(bytesReceived) / bytesTotal);
                     if(_tmp > progress) {

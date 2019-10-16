@@ -45,6 +45,10 @@ Then we should share on *https://mysoftware.org* access for maintenance file. Le
       ]
     }
   },
+  "mymusic": [
+    "http://mediastorage.com/Muse/Aftermath.mp3",
+	"http://mediastorage.com/TheRasmus/HolyGrail.mp3"
+  ],
   "otherapp": {
     "android": [
       {

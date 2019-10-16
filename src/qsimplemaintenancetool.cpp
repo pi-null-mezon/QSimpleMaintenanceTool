@@ -8,6 +8,7 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 
+#include <QDir>
 #include <QFile>
 #include <QSysInfo>
 #include <QFileInfo>
@@ -34,8 +35,9 @@ QSimpleMaintenanceTool::QSimpleMaintenanceTool(const QString &_appname, QObject 
           platform.toUtf8().constData(), cpuarch.toUtf8().constData());
 }
 
-void QSimpleMaintenanceTool::check(const QString &_url)
+void QSimpleMaintenanceTool::check(const QString &_url, const QString &_rcname)
 {
+    rcname = _rcname;
     QFileDownloader *_thread = new QFileDownloader(QUrl::fromUserInput(_url));
     connect(_thread,SIGNAL(downloadProgress(qint64,qint64)),this,SIGNAL(checkProgress(qint64,qint64)));
     connect(_thread,SIGNAL(replyReady(int,QNetworkReply::NetworkError,QString,QByteArray,QString)),
@@ -56,51 +58,69 @@ void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError 
             if(_jsonparseerr.error != QJsonParseError::NoError)
                 emit error(tr("Maintenance check failed: '%1'").arg(_jsonparseerr.errorString()));
             else {
-                if(_json.contains(appname)) {
-                    _json = _json.value(appname).toObject();
-                    if(_json.contains(platform)) {
-                        QJsonObject _jtmp = _json.value(platform).toObject();
-                        QJsonArray _jsonarray;
-                        if(_jtmp.contains(cpuarch))
-                            _jsonarray = _jtmp.value(cpuarch).toArray();
-                        else
-                            _jsonarray = _json.value(platform).toArray();
-                        if(_jsonarray.size() > 0) {
-                            QList<smt::Version> _versions;
-                            _versions.reserve(_jsonarray.size());
-                            for(int i = 0; i < _jsonarray.size(); ++i) {
-                                _json = _jsonarray.at(i).toObject();
-                                _versions.push_back(smt::Version(_json.value("version").toString(),
-                                                                    _json.value("url").toString(),
-                                                                    _json.value("changelog").toString()));
-                            }
-                            std::sort(_versions.begin(),_versions.end(),[](const smt::Version &_l,const smt::Version &_r){
-                                return _l.version > _r.version;
-                            });
-                            emit checked(_versions);
-                        } else
-                            emit error(tr("Maintenance check failed: no available versions found"));
-                    }
-                    else
-                        emit error(tr("Maintenance check failed: '%1' section not found").arg(platform));
-                } else
-                    emit error(tr("Maintenance check failed: '%1' section not found").arg(appname));
+                if(rcname.isEmpty()) {
+                    if(_json.contains(appname)) {
+                        _json = _json.value(appname).toObject();
+                        if(_json.contains(platform)) {
+                            QJsonObject _jtmp = _json.value(platform).toObject();
+                            QJsonArray _jsonarray;
+                            if(_jtmp.contains(cpuarch))
+                                _jsonarray = _jtmp.value(cpuarch).toArray();
+                            else
+                                _jsonarray = _json.value(platform).toArray();
+                            if(_jsonarray.size() > 0) {
+                                QList<smt::Version> _versions;
+                                _versions.reserve(_jsonarray.size());
+                                for(int i = 0; i < _jsonarray.size(); ++i) {
+                                    _json = _jsonarray.at(i).toObject();
+                                    _versions.push_back(smt::Version(_json.value("version").toString(),
+                                                                     _json.value("url").toString(),
+                                                                     _json.value("changelog").toString()));
+                                }
+                                std::sort(_versions.begin(),_versions.end(),[](const smt::Version &_l,const smt::Version &_r){
+                                    return _l.version > _r.version;
+                                });
+                                emit checked(_versions);
+                            } else emit error(tr("Maintenance check failed: no available versions found"));
+                        } else emit error(tr("Maintenance check failed: '%1' section not found").arg(platform));
+                    } else emit error(tr("Maintenance check failed: '%1' section not found").arg(appname));
+                } else { // branch for files without platform and version
+                    if(_json.contains(rcname)) {
+                        QJsonArray _jsonarray = _json.value(rcname).toArray();
+                        QStringList _urls;
+                        _urls.reserve(_jsonarray.size());
+                        for(int i = 0; i < _jsonarray.size(); ++i)
+                            _urls.push_back(_jsonarray.at(i).toString());
+                        emit files(_urls);
+                    } else emit error(tr("Maintenance check failed: '%1' section not found").arg(rcname));
+                }
             }
-        } else
-            emit error(tr("Maintenance check failed: empty maintenance info file"));
-    } else
-        emit error(tr("Maintenance check failed: '%1'").arg(_errstring));
+        } else emit error(tr("Maintenance check failed: empty maintenance file"));
+    } else emit error(tr("Maintenance check failed: '%1'").arg(_errstring));
 }
 
-void QSimpleMaintenanceTool::download(const QString &_url,const QString &_targetpath)
+void QSimpleMaintenanceTool::download(const QString &_url, const QString &_targetpath, const bool _forcedownload)
 {
     targetpath = _targetpath;
-    QFileDownloader *_thread = new QFileDownloader(QUrl::fromUserInput(_url));
-    connect(_thread,SIGNAL(downloadProgress(qint64,qint64)),this,SIGNAL(downloadProgress(qint64,qint64)));
-    connect(_thread,SIGNAL(replyReady(int,QNetworkReply::NetworkError,QString,QByteArray,QString)),
-               this,SLOT(__download(int,QNetworkReply::NetworkError,QString,QByteArray,QString)));
-    connect(_thread,SIGNAL(finished()),_thread,SLOT(deleteLater()));
-    _thread->start();
+    QDir _dir(_targetpath);
+    if(!_dir.exists())
+        _dir.mkpath(_dir.absolutePath());
+    const QString _targetname = QString("%1/%2").arg(_targetpath,_url.section('/',-1));
+    if(!_forcedownload && QFileInfo(_targetname).exists())
+        emit downloaded(_targetname);
+    else {
+        QFileDownloader *_thread = new QFileDownloader(QUrl::fromUserInput(_url));
+        connect(_thread,SIGNAL(downloadProgress(qint64,qint64)),this,SLOT(__updateDownloadProgress(qint64, qint64)));
+        connect(_thread,SIGNAL(replyReady(int,QNetworkReply::NetworkError,QString,QByteArray,QString)),
+                   this,SLOT(__download(int,QNetworkReply::NetworkError,QString,QByteArray,QString)));
+        connect(_thread,SIGNAL(finished()),_thread,SLOT(deleteLater()));
+        _thread->start();
+    }
+}
+
+void QSimpleMaintenanceTool::__updateDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
+{
+    emit downloadProgress(qobject_cast<QFileDownloader*>(sender())->getUrl(),bytesReceived,bytesTotal);
 }
 
 void QSimpleMaintenanceTool::__download(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_downloads, const QString &_filename)
@@ -127,3 +147,5 @@ void QSimpleMaintenanceTool::__download(int _httpcode, QNetworkReply::NetworkErr
     } else
         emit error(tr("Maintenance download failed: '%1'").arg(_errstring));
 }
+
+

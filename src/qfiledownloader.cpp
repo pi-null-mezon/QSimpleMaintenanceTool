@@ -19,3 +19,8 @@ void QFileDownloader::run()
                     url.toString().section('/',-1));
     _reply->deleteLater();
 }
+
+QString QFileDownloader::getUrl() const
+{
+    return url.toString();
+}

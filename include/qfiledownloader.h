@@ -14,6 +14,8 @@ class QFileDownloader : public QThread
 public:
     QFileDownloader(const QUrl &_url, QObject *_parent = nullptr);
 
+    QString getUrl() const;
+
 signals:
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
     void replyReady(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_downloads, const QString &_filename);
