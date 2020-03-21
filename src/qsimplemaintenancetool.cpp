@@ -53,10 +53,10 @@ void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError 
     //qDebug("HTTP code [%d] has been recieved in QSimpleMaintenanceTool::__check()", _httpcode);
     if(_err == QNetworkReply::NetworkError::NoError) {
         if(_jsondata.size() > 0) {
-            QJsonParseError _jsonparseerr;
-            QJsonObject _json = QJsonDocument::fromJson(_jsondata,&_jsonparseerr).object();
-            if(_jsonparseerr.error != QJsonParseError::NoError)
-                emit error(tr("Maintenance check failed: '%1'").arg(_jsonparseerr.errorString()));
+            QJsonParseError _jperr;
+            QJsonObject _json = QJsonDocument::fromJson(_jsondata,&_jperr).object();
+            if(_jperr.error != QJsonParseError::NoError)
+                emit error(UpdatesFileParsingError,tr("Maintenance check failed: '%1'").arg(_jperr.errorString()));
             else {
                 if(rcname.isEmpty()) {
                     if(_json.contains(appname)) {
@@ -81,9 +81,9 @@ void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError 
                                     return _l.version > _r.version;
                                 });
                                 emit checked(_versions);
-                            } else emit error(tr("Maintenance check failed: no available versions found"));
-                        } else emit error(tr("Maintenance check failed: '%1' section not found").arg(platform));
-                    } else emit error(tr("Maintenance check failed: '%1' section not found").arg(appname));
+                            } else emit error(NoUpdatesFound,tr("Maintenance check failed: no available versions found"));
+                        } else emit error(NoUpdatesFound,tr("Maintenance check failed: '%1' section not found").arg(platform));
+                    } else emit error(NoUpdatesFound,tr("Maintenance check failed: '%1' section not found").arg(appname));
                 } else { // branch for files without platform and version
                     if(_json.contains(rcname)) {
                         QJsonArray _jsonarray = _json.value(rcname).toArray();
@@ -92,11 +92,11 @@ void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError 
                         for(int i = 0; i < _jsonarray.size(); ++i)
                             _urls.push_back(_jsonarray.at(i).toString());
                         emit files(_urls);
-                    } else emit error(tr("Maintenance check failed: '%1' section not found").arg(rcname));
+                    } else emit error(NoResourcesFound,tr("Maintenance check failed: '%1' section not found").arg(rcname));
                 }
             }
-        } else emit error(tr("Maintenance check failed: empty maintenance file"));
-    } else emit error(tr("Maintenance check failed: '%1'").arg(_errstring));
+        } else emit error(NoUpdatesFound,tr("Maintenance check failed: empty maintenance file"));
+    } else emit error(NetworkError,tr("Maintenance check failed: '%1'").arg(_errstring));
 }
 
 void QSimpleMaintenanceTool::download(const QString &_url, const QString &_targetpath, const bool _forcedownload)
@@ -133,7 +133,7 @@ void QSimpleMaintenanceTool::__download(int _httpcode, QNetworkReply::NetworkErr
             QFile _file(_targetname);
             if(_file.exists())
                 if(QFile::remove(_targetname) == false) {
-                    emit error("Maintenance download failed: file already exists on local machine and can not be removed");
+                    emit error(RemoveFileError,tr("Maintenance download failed: file already exists on local machine and can not be removed"));
                     return;
                 }
             if(_file.open(QIODevice::WriteOnly)) {
@@ -141,11 +141,11 @@ void QSimpleMaintenanceTool::__download(int _httpcode, QNetworkReply::NetworkErr
                 _file.close();
                 emit downloaded(_targetname);
             } else
-                emit error("Maintenance download failed: can not open file for write");
+                emit error(WriteToFileError,tr("Maintenance download failed: can not open file for write"));
         } else
-            emit error("Maintenance download failed: zero size downloads");
+            emit error(ZeroSizeDownload,tr("Maintenance download failed: zero size downloads"));
     } else
-        emit error(tr("Maintenance download failed: '%1'").arg(_errstring));
+        emit error(NetworkError,tr("Maintenance download failed: '%1'").arg(_errstring));
 }
 
 

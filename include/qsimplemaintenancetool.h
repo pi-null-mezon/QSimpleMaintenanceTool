@@ -24,10 +24,11 @@ class QSimpleMaintenanceTool : public QObject
 {
     Q_OBJECT
 public:
+    enum ErrorType {UpdatesFileParsingError, NoUpdatesFound, NoResourcesFound, RemoveFileError, WriteToFileError, ZeroSizeDownload, NetworkError};
     explicit QSimpleMaintenanceTool(const QString &_appname=QCoreApplication::applicationName(), QObject *parent = nullptr);
 
 signals:
-    void error(const QString &_message);
+    void error(ErrorType _type, const QString &_message);
     void checkProgress(qint64 bytesReceived, qint64 bytesTotal);
     /**
      * @brief checked, this signal is emitted when version/s for target product is found
