@@ -6,13 +6,14 @@ QFileDownloader::QFileDownloader(const QUrl &_url, QObject *_parent): QThread(_p
 
 void QFileDownloader::run()
 {
-    QNetworkAccessManager _manager;
-    qDebug("GET %s",url.toString().toUtf8().constData());
+    QNetworkAccessManager _manager;    
     QNetworkReply *_reply = _manager.get(QNetworkRequest(url));
     connect(_reply,SIGNAL(finished()),this,SLOT(quit()));
     connect(_reply,SIGNAL(downloadProgress(qint64,qint64)),this,SIGNAL(downloadProgress(qint64,qint64)));
     exec();
-    emit replyReady(_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(),
+    const int _httpcode = _reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    qDebug("GET %s [reply %d]",url.toString().toUtf8().constData(),_httpcode);
+    emit replyReady(_httpcode,
                     _reply->error(),
                     _reply->errorString(),
                     _reply->readAll(),
