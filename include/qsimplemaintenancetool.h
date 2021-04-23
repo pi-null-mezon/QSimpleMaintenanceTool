@@ -60,11 +60,11 @@ public slots:
 
 private slots:
     void __check(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_jsondata, const QString &_filename);
-    void __download(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_downloads, const QString &_filename);
+    void __download(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_downloads, const QString &_targetpath, const QString &_filename);
     void __updateDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 
 private:
-    QString appname, platform, cpuarch, targetpath, rcname;
+    QString appname, platform, cpuarch, rcname;
 };
 
 #endif // QSIMPLEMAINTENANCETOOL_H
