@@ -38,16 +38,17 @@ QSimpleMaintenanceTool::QSimpleMaintenanceTool(const QString &_appname, QObject 
 void QSimpleMaintenanceTool::check(const QString &_url, const QString &_rcname)
 {
     rcname = _rcname;
-    QFileDownloader *_thread = new QFileDownloader(QUrl::fromUserInput(_url));
+    QFileDownloader *_thread = new QFileDownloader(QUrl::fromUserInput(_url),QString());
     connect(_thread,SIGNAL(downloadProgress(qint64,qint64)),this,SIGNAL(checkProgress(qint64,qint64)));
-    connect(_thread,SIGNAL(replyReady(int,QNetworkReply::NetworkError,QString,QByteArray,QString)),
-               this,SLOT(__check(int,QNetworkReply::NetworkError,QString,QByteArray,QString)));
+    connect(_thread,SIGNAL(replyReady(int,QNetworkReply::NetworkError,QString,QByteArray,QString,QString)),
+               this,SLOT(__check(int,QNetworkReply::NetworkError,QString,QByteArray,QString,QString)));
     connect(_thread,SIGNAL(finished()),_thread,SLOT(deleteLater()));
     _thread->start();
 }
 
-void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_jsondata, const QString &_filename)
+void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_jsondata, const QString &_targetpath, const QString &_filename)
 {
+    Q_UNUSED(_targetpath)
     Q_UNUSED(_filename)
     Q_UNUSED(_httpcode)
     //qDebug("HTTP code [%d] has been recieved in QSimpleMaintenanceTool::__check()", _httpcode);

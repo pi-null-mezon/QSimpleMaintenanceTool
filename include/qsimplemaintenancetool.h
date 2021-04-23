@@ -59,7 +59,7 @@ public slots:
     void download(const QString &_url, const QString &_targetpath=QStandardPaths::writableLocation(QStandardPaths::DownloadLocation), const bool _forcedownload=false);
 
 private slots:
-    void __check(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_jsondata, const QString &_filename);
+    void __check(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_jsondata, const QString &_targetpath, const QString &_filename);
     void __download(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_downloads, const QString &_targetpath, const QString &_filename);
     void __updateDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 
