@@ -37,16 +37,15 @@ QSimpleMaintenanceTool::QSimpleMaintenanceTool(const QString &_appname, QObject 
 
 void QSimpleMaintenanceTool::check(const QString &_url, const QString &_rcname)
 {
-    rcname = _rcname;
-    QFileDownloader *_thread = new QFileDownloader(QUrl::fromUserInput(_url),QString());
+    QFileDownloader *_thread = new QFileDownloader(QUrl::fromUserInput(_url),QString(),_rcname);
     connect(_thread,SIGNAL(downloadProgress(qint64,qint64)),this,SIGNAL(checkProgress(qint64,qint64)));
-    connect(_thread,SIGNAL(replyReady(int,QNetworkReply::NetworkError,QString,QByteArray,QString,QString)),
-               this,SLOT(__check(int,QNetworkReply::NetworkError,QString,QByteArray,QString,QString)));
+    connect(_thread,SIGNAL(replyReady(int,QNetworkReply::NetworkError,QString,QByteArray,QString,QString,QString)),
+               this,SLOT(__check(int,QNetworkReply::NetworkError,QString,QByteArray,QString,QString,QString)));
     connect(_thread,SIGNAL(finished()),_thread,SLOT(deleteLater()));
     _thread->start();
 }
 
-void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_jsondata, const QString &_targetpath, const QString &_filename)
+void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_jsondata, const QString &_rcname, const QString &_targetpath, const QString &_filename)
 {
     Q_UNUSED(_targetpath)
     Q_UNUSED(_filename)
@@ -59,7 +58,7 @@ void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError 
             if(_jperr.error != QJsonParseError::NoError)
                 emit error(UpdatesFileParsingError,tr("Maintenance check failed: '%1'").arg(_jperr.errorString()));
             else {
-                if(rcname.isEmpty()) {
+                if(_rcname.isEmpty()) {
                     if(_json.contains(appname)) {
                         _json = _json.value(appname).toObject();
                         if(_json.contains(platform)) {
@@ -86,14 +85,14 @@ void QSimpleMaintenanceTool::__check(int _httpcode, QNetworkReply::NetworkError 
                         } else emit error(NoUpdatesFound,tr("Maintenance check failed: '%1' section not found").arg(platform));
                     } else emit error(NoUpdatesFound,tr("Maintenance check failed: '%1' section not found").arg(appname));
                 } else { // branch for files without platform and version
-                    if(_json.contains(rcname)) {
-                        QJsonArray _jsonarray = _json.value(rcname).toArray();
+                    if(_json.contains(_rcname)) {
+                        QJsonArray _jsonarray = _json.value(_rcname).toArray();
                         QStringList _urls;
                         _urls.reserve(_jsonarray.size());
                         for(int i = 0; i < _jsonarray.size(); ++i)
                             _urls.push_back(_jsonarray.at(i).toString());
                         emit files(_urls);
-                    } else emit error(NoResourcesFound,tr("Maintenance check failed: '%1' section not found").arg(rcname));
+                    } else emit error(NoResourcesFound,tr("Maintenance check failed: '%1' section not found").arg(_rcname));
                 }
             }
         } else emit error(NoUpdatesFound,tr("Maintenance check failed: empty maintenance file"));
@@ -109,10 +108,10 @@ void QSimpleMaintenanceTool::download(const QString &_url, const QString &_targe
     if(!_forcedownload && QFileInfo(_targetname).exists())
         emit downloaded(_targetname);
     else {
-        QFileDownloader *_thread = new QFileDownloader(QUrl::fromUserInput(_url),_targetpath);
+        QFileDownloader *_thread = new QFileDownloader(QUrl::fromUserInput(_url),_targetpath,QString());
         connect(_thread,SIGNAL(downloadProgress(qint64,qint64)),this,SLOT(__updateDownloadProgress(qint64, qint64)));
-        connect(_thread,SIGNAL(replyReady(int,QNetworkReply::NetworkError,QString,QByteArray,QString,QString)),
-                   this,SLOT(__download(int,QNetworkReply::NetworkError,QString,QByteArray,QString,QString)));
+        connect(_thread,SIGNAL(replyReady(int,QNetworkReply::NetworkError,QString,QByteArray,QString,QString,QString)),
+                   this,SLOT(__download(int,QNetworkReply::NetworkError,QString,QByteArray,QString,QString,QString)));
         connect(_thread,SIGNAL(finished()),_thread,SLOT(deleteLater()));
         _thread->start();
     }
@@ -123,9 +122,10 @@ void QSimpleMaintenanceTool::__updateDownloadProgress(qint64 bytesReceived, qint
     emit downloadProgress(qobject_cast<QFileDownloader*>(sender())->getUrl(),bytesReceived,bytesTotal);
 }
 
-void QSimpleMaintenanceTool::__download(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_downloads, const QString &_targetpath, const QString &_filename)
+void QSimpleMaintenanceTool::__download(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_downloads, const QString &_rcname, const QString &_targetpath, const QString &_filename)
 {
     Q_UNUSED(_httpcode)
+    Q_UNUSED(_rcname)
     //qDebug("HTTP code [%d] has been recieved in QSimpleMaintenanceTool::__download()", _httpcode);
     if(_err == QNetworkReply::NetworkError::NoError) {
         if(_downloads.size() > 0) {

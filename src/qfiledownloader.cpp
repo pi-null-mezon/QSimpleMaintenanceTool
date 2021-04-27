@@ -1,8 +1,9 @@
 #include "qfiledownloader.h"
 
-QFileDownloader::QFileDownloader(const QUrl &_url, const QString &_targetpath, QObject *_parent): QThread(_parent),
+QFileDownloader::QFileDownloader(const QUrl &_url, const QString &_targetpath, const QString &_rcname, QObject *_parent): QThread(_parent),
     url(_url),
-    targetpath(_targetpath)
+    targetpath(_targetpath),
+    rcname(_rcname)
 {
 }
 
@@ -19,6 +20,7 @@ void QFileDownloader::run()
                     _reply->error(),
                     _reply->errorString(),
                     _reply->readAll(),
+                    rcname,
                     targetpath,
                     url.toString().section('/',-1));
     _reply->deleteLater();

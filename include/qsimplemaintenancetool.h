@@ -31,13 +31,13 @@ signals:
     void error(ErrorType _type, const QString &_message);
     void checkProgress(qint64 bytesReceived, qint64 bytesTotal);
     /**
-     * @brief checked, this signal is emitted when version/s for target product is found
+     * @brief checked, this signal is emitted when version/s for target appname has been found
      * @param _versions - list of available versions ordered descending
      */
     void checked(const QList<smt::Version> &_versions);
     /**
-     * @brief files, this signal is emitted when version/s for target product is found
-     * @param _urls - list of urls to download platform- and version-less files such as music, pictures, images etc.
+     * @brief files, this signal is emitted when rcname files has been found
+     * @param _urls - list of urls to download platform and version less files such as music, pictures, images etc.
      */
     void files(const QStringList &_urls);
     void downloadProgress(const QString _url, qint64 bytesReceived, qint64 bytesTotal);
@@ -59,12 +59,12 @@ public slots:
     void download(const QString &_url, const QString &_targetpath=QStandardPaths::writableLocation(QStandardPaths::DownloadLocation), const bool _forcedownload=false);
 
 private slots:
-    void __check(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_jsondata, const QString &_targetpath, const QString &_filename);
-    void __download(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_downloads, const QString &_targetpath, const QString &_filename);
+    void __check(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_jsondata, const QString &_rcname, const QString &_targetpath, const QString &_filename);
+    void __download(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_downloads, const QString &_rcname, const QString &_targetpath, const QString &_filename);
     void __updateDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 
 private:
-    QString appname, platform, cpuarch, rcname;
+    QString appname, platform, cpuarch;
 };
 
 #endif // QSIMPLEMAINTENANCETOOL_H

@@ -12,13 +12,19 @@ class QFileDownloader : public QThread
 {
     Q_OBJECT
 public:
-    QFileDownloader(const QUrl &_url, const QString &_targetpath, QObject *_parent = nullptr);
+    QFileDownloader(const QUrl &_url, const QString &_targetpath, const QString &_rcname, QObject *_parent = nullptr);
 
     QString getUrl() const;
 
 signals:
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
-    void replyReady(int _httpcode, QNetworkReply::NetworkError _err, const QString &_errstring, const QByteArray &_downloads, const QString &_targetpath, const QString &_filename);
+    void replyReady(int _httpcode,
+                    QNetworkReply::NetworkError _err,
+                    const QString &_errstring,
+                    const QByteArray &_bindata,
+                    const QString &_rcname,
+                    const QString &_targetpath,
+                    const QString &_filename);
 
 protected:
     void run();
@@ -26,6 +32,7 @@ protected:
 private:
     QUrl url;
     QString targetpath;
+    QString rcname;
 };
 
 #endif // QFILEDOWNLOADER_H
