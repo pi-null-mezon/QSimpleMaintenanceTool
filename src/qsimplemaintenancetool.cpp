@@ -23,10 +23,10 @@ QSimpleMaintenanceTool::QSimpleMaintenanceTool(const QString &_appname, QObject 
     platform = "windows";
 #elif defined Q_OS_MAC
     platform = "osx";
-#elif defined Q_OS_LINUX
-    platform = "linux";
 #elif defined Q_OS_ANDROID
     platform = "android";
+#elif defined Q_OS_LINUX
+    platform = "linux";
 #elif defined Q_OS_IOS
     platform = "ios";
 #endif
